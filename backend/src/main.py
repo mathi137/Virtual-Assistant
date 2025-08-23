@@ -9,10 +9,12 @@ from src.db.session import init_db, close_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initializing  database
     await init_db()
     
     yield
 
+    # Closing database
     await close_db()
 
 
