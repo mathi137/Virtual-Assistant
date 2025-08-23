@@ -2,12 +2,18 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.config import settings
 from src.router.user import router as user_router
+from src.db.session import init_db, close_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_db()
+    
     yield
+
+    await close_db()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -20,4 +26,4 @@ app.add_middleware(
     allow_headers=["*"],        # <-- any headers
 )
 
-app.include_router(user_router, prefix="/user", tags=["users"])
+app.include_router(user_router, prefix=f"{settings.API_PREFIX}/user", tags=["users"])

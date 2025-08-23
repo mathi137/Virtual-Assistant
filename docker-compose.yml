@@ -5,8 +5,32 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - ./backend/src:/home/fastapi/src
+    depends_on:
+      - mysql
+    networks:
+      - system_network
+
+  mysql:
+    image: mysql:9.4
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - system_network
 
   # frontend:
   #   build: ./frontend
@@ -14,3 +38,10 @@ services:
   #   restart: always
   #   ports:
   #     - "3000:3000"
+
+networks:
+  system_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
