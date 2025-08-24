@@ -20,7 +20,11 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url=f"{settings.API_PREFIX}/docs",
+    redoc_url=f"{settings.API_PREFIX}/redoc",
+)
 
 app.add_middleware(
     CORSMiddleware,
