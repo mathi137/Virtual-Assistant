@@ -1,15 +1,16 @@
 from fastapi import HTTPException
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import Type
 
 from src.config import get_logger
+from src.db.model.user import User, UserUpdate
 
 logger = get_logger(__name__)
 
 class Database:
     @staticmethod
-    async def create(session: AsyncSession, item: SQLModel):
+    async def create(session: AsyncSession, item: SQLModel) -> SQLModel:
         try:
             session.add(item)
             await session.commit()
@@ -20,23 +21,33 @@ class Database:
             raise HTTPException(status_code=400, detail=str(e))
         return item
 
+
     @staticmethod
-    async def get(session: AsyncSession, id: int, model: Type[SQLModel]):
+    async def get(session: AsyncSession, id: int, model: Type[SQLModel]) -> SQLModel:
         item = await session.get(model, id)
         if not item:
             logger.error(f"Item with id {id} not found")
             raise HTTPException(status_code=404, detail="Item not found")
+        if hasattr(item, "disabled") and item.disabled:
+            logger.error(f"Item with id {id} is disabled")
+            raise HTTPException(status_code=404, detail="Item not found")
         return item
-    
+
+
     @staticmethod
-    async def update(session: AsyncSession, id: int, update_data: SQLModel, model: Type[SQLModel]):
-        # Get the existing item
+    async def update(session: AsyncSession, id: int, update_data: SQLModel, model: Type[SQLModel]) -> SQLModel:
+        # Get the existing item first (this validates it exists)
         db_item = await Database.get(session, id, model)
         
-        # Update only the fields that are not None
+        # Process update data
         update_dict = update_data.model_dump(exclude_unset=True)
+        
+        # Update only the fields that are not None
         for field, value in update_dict.items():
             if value is not None:
+                if field == "password" and value is not None:
+                    from src.utils.auth import get_password_hash # import here to avoid circular import
+                    value = get_password_hash(value)
                 setattr(db_item, field, value)
         
         try:
@@ -49,14 +60,46 @@ class Database:
             raise HTTPException(status_code=400, detail=str(e))
         return db_item
     
+
     @staticmethod
-    async def delete(session: AsyncSession, id: int, model: Type[SQLModel]):
-        db_item = await Database.get(session, id, model)
+    async def delete(session: AsyncSession, id: int, model: Type[SQLModel], update_model: Type[SQLModel]) -> None:
+        return await Database.update(session, id, update_model(disabled=True), model)
+    
+    
+    @staticmethod
+    async def reactivate(session: AsyncSession, id: int, model: Type[SQLModel], update_model: Type[SQLModel]) -> None:
+        return await Database.update(session, id, update_model(disabled=False), model)
+    
+
+    @staticmethod
+    async def get_user_by_email(session: AsyncSession, email: str) -> User:
+        result = await session.exec(select(User).where(User.email == email))
+        user = result.first()
+        return user
+
+
+    @staticmethod
+    async def update_user(session: AsyncSession, user: User, update_data: UserUpdate) -> User:
+        # Process update data
+        update_dict = update_data.model_dump(exclude_unset=True)
+        
+        # Hash password if it's being updated - import here to avoid circular import
+        if 'password' in update_dict and update_dict['password'] is not None:
+            from src.utils.auth import get_password_hash
+            update_dict['password'] = get_password_hash(update_dict['password'])
+        
+        # Update only the fields that are not None
+        for field, value in update_dict.items():
+            if value is not None:
+                setattr(user, field, value)
         
         try:
-            await session.delete(db_item)
+            session.add(user)
             await session.commit()
+            await session.refresh(user)
         except Exception as e:
-            logger.error(f"Error deleting item: {e}")
+            logger.error(f"Error updating item: {e}")
             await session.rollback()
             raise HTTPException(status_code=400, detail=str(e))
+        return user
+    

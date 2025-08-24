@@ -13,13 +13,15 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
+    disabled: bool = Field(default=False)
 
 
 class UserRead(SQLModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra='ignore')
     
     id: int
     email: str
+    disabled: bool
 
 
 class UserUpdate(SQLModel):
@@ -27,6 +29,7 @@ class UserUpdate(SQLModel):
     
     email: Optional[str] = None
     password: Optional[str] = None
+    disabled: Optional[bool] = None
 
     @model_validator(mode='before')
     @classmethod
@@ -36,3 +39,4 @@ class UserUpdate(SQLModel):
             if not any(value is not None for value in values.values()):
                 raise ValueError("At least one field must be provided for update")
         return values
+    
