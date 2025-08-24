@@ -9,8 +9,8 @@ Este projeto foi estruturado seguindo o padrão de microserviços, permitindo es
 ```
 virtual-assistant/
 ├── backend/           # API RESTful com FastAPI
-├── frontend/          # Interface web (futuro)
-├── chatbot/           # Aplicativo móvel (futuro)
+├── frontend/          # Interface web
+├── chatbot/           # Interface Telegram/Whatsapp
 ├── docker-compose.yml # Orquestração dos serviços
 └── README.md          # Este arquivo
 ```
