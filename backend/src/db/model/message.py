@@ -1,11 +1,11 @@
 from typing import Optional
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 
 from sqlmodel import SQLModel, Field
 
 
-class MessageRole(Enum, str):
+class MessageRole(StrEnum):
     USER = "user"
     AGENT = "agent"
 

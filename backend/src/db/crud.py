@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlmodel import SQLModel, select
+from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import Type
 
@@ -15,10 +16,16 @@ class Database:
             session.add(item)
             await session.commit()
             await session.refresh(item)
+
+        # Duplicate entry
+        except IntegrityError as e:
+            logger.error(f"Integrity error: {e}")
+            await session.rollback()
+            raise HTTPException(status_code=400, detail="Item with given unique field already exists")
         except Exception as e:
             logger.error(f"Error creating item: {e}")
             await session.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail="Unexpected error when creating item")
         return item
 
 
@@ -38,16 +45,16 @@ class Database:
     async def update(session: AsyncSession, id: int, update_data: SQLModel, model: Type[SQLModel]) -> SQLModel:
         # Get the existing item first (this validates it exists)
         db_item = await Database.get(session, id, model)
+        if not db_item:
+            raise HTTPException(status_code=404, detail="Item not found")
         
         # Process update data
-        update_dict = update_data.model_dump(exclude_unset=True)
+        if not isinstance(model, User):
+            update_dict = update_data.model_dump(exclude_unset=True)
         
         # Update only the fields that are not None
         for field, value in update_dict.items():
             if value is not None:
-                if field == "password" and value is not None:
-                    from src.utils.auth import get_password_hash # import here to avoid circular import
-                    value = get_password_hash(value)
                 setattr(db_item, field, value)
         
         try:
@@ -63,14 +70,19 @@ class Database:
 
     @staticmethod
     async def delete(session: AsyncSession, id: int, model: Type[SQLModel], update_model: Type[SQLModel]) -> None:
+        if hasattr(model, "disabled") is False:
+            raise HTTPException(status_code=400, detail="Model does not support soft delete")
         return await Database.update(session, id, update_model(disabled=True), model)
     
     
     @staticmethod
     async def reactivate(session: AsyncSession, id: int, model: Type[SQLModel], update_model: Type[SQLModel]) -> None:
+        if hasattr(model, "disabled") is False:
+            raise HTTPException(status_code=400, detail="Model does not support reactivation")
         return await Database.update(session, id, update_model(disabled=False), model)
     
 
+class UserCRUD(Database):
     @staticmethod
     async def get_user_by_email(session: AsyncSession, email: str) -> User:
         result = await session.exec(select(User).where(User.email == email))
@@ -79,7 +91,7 @@ class Database:
 
 
     @staticmethod
-    async def update_user(session: AsyncSession, user: User, update_data: UserUpdate) -> User:
+    async def update(session: AsyncSession, user: User, update_data: UserUpdate) -> User:
         # Process update data
         update_dict = update_data.model_dump(exclude_unset=True)
         
@@ -88,18 +100,4 @@ class Database:
             from src.utils.auth import get_password_hash
             update_dict['password'] = get_password_hash(update_dict['password'])
         
-        # Update only the fields that are not None
-        for field, value in update_dict.items():
-            if value is not None:
-                setattr(user, field, value)
-        
-        try:
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
-        except Exception as e:
-            logger.error(f"Error updating item: {e}")
-            await session.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
-        return user
-    
+        return await Database.update(session, user.id, UserUpdate(**update_dict), User)

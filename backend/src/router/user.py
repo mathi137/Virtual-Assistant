@@ -5,7 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.model.user import User, UserBase, UserRead, UserUpdate
 from src.db.session import get_session_dep
-from src.db.crud import Database
+from src.db.crud import UserCRUD as Database
 from src.utils.auth import get_current_active_user, get_password_hash
 
 router = APIRouter()
