@@ -17,7 +17,6 @@ class Database:
             await session.commit()
             await session.refresh(item)
 
-        # Duplicate entry
         except IntegrityError as e:
             logger.error(f"Integrity error: {e}")
             await session.rollback()

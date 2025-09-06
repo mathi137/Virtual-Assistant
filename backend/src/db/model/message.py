@@ -1,13 +1,19 @@
 from typing import Optional
 from datetime import datetime, timezone
-from enum import StrEnum
+from enum import Enum, auto
 
 from sqlmodel import SQLModel, Field
 
 
-class MessageRole(StrEnum):
-    USER = "user"
-    AGENT = "agent"
+class MessageRole(Enum):
+    USER = auto()
+    AGENT = auto()
+
+
+message_role_dict: dict[MessageRole, str] = {
+    MessageRole.USER: "user",
+    MessageRole.AGENT: "agent",
+}
 
 
 class MessageBase(SQLModel):
