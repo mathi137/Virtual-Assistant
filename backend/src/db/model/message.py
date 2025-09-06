@@ -4,7 +4,6 @@ from enum import Enum, auto
 
 from sqlmodel import SQLModel, Field
 
-
 class MessageRole(Enum):
     CLIENT = auto()
     AGENT = auto()
@@ -26,7 +25,7 @@ class MessageBase(SQLModel):
 class Message(MessageBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     chat_id: int = Field(foreign_key="chat.id")
-    text: str
+    text: str = Field(max_length=4096)
     role: MessageRole = Field(default=MessageRole.USER, index=True)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
