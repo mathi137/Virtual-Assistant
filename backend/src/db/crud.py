@@ -23,14 +23,14 @@ class Database:
 
 
     @staticmethod
-    async def get(session: AsyncSession, id: int, model: Type[SQLModel]) -> SQLModel:
+    async def get(session: AsyncSession, id: int, model: Type[SQLModel]) -> SQLModel | None:
         item = await session.get(model, id)
         if not item:
-            logger.error(f"Item with id {id} not found")
-            raise HTTPException(status_code=404, detail="Item not found")
+            logger.warning(f"Item with id {id} not found")
+            return None
         if hasattr(item, "disabled") and item.disabled:
-            logger.error(f"Item with id {id} is disabled")
-            raise HTTPException(status_code=404, detail="Item not found")
+            logger.warning(f"Item with id {id} is disabled")
+            return None
         return item
 
 

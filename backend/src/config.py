@@ -11,6 +11,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "mysql+aiomysql://appuser:password@mysql:3306/fastapi"
 
+    OPENAI_API_KEY: str
+
 settings = Settings()
 
 logging.basicConfig(

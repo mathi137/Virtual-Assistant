@@ -8,6 +8,7 @@ dependencies = [
     "aiomysql>=0.2.0",
     "cryptography>=45.0.6",
     "fastapi[all]>=0.116.1",
+    "langgraph>=0.6.6",
     "passlib[bcrypt]>=1.7.4",
     "pyjwt>=2.10.1",
     "sqlmodel>=0.0.24",
