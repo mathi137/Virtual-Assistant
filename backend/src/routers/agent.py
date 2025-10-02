@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -20,7 +20,10 @@ async def create_agent(agent: AgentCreate, session: Annotated[AsyncSession, Depe
 
 @router.get("/{agent_id}", response_model=AgentRead, status_code=status.HTTP_200_OK)
 async def get_agent(agent_id: int, session: Annotated[AsyncSession, Depends(get_session_dep)]):
-    return await Database.get(session, agent_id)
+    item = await Database.get(session, agent_id)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    return item
 
 
 @router.put("/{agent_id}", response_model=AgentRead, status_code=status.HTTP_200_OK)

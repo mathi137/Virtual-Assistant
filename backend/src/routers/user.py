@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.model.user import User, UserBase, UserRead, UserUpdate
@@ -21,7 +21,10 @@ async def create_user(user_data: UserBase, session: AsyncSession = Depends(get_s
 
 @router.get("/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def get_user(user_id: int, session: AsyncSession = Depends(get_session_dep)):
-    return await Database.get(session, user_id, User)
+    item = await Database.get(session, user_id, User)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return item
 
 
 @router.put("/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
