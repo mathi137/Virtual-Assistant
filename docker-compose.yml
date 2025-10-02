@@ -11,8 +11,11 @@ services:
       DATABASE_URL: ${DATABASE_URL}
     volumes:
       - ./backend/src:/home/fastapi/src
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+
     networks:
       - system_network
 
@@ -29,6 +32,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - system_network
 

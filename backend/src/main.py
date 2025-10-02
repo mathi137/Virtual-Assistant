@@ -3,17 +3,19 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
-from src.db.session import init_db, close_db
+from src.db.session import init_db, close_db, populate_db
 
-from src.router.user import router as user_router
-from src.router.auth import router as auth_router
-from src.router.agent import router as agent_router
+from src.routers.user import router as user_router
+from src.routers.auth import router as auth_router
+from src.routers.agent import router as agent_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initializing  database
     await init_db()
+    # Populate database with initial data
+    await populate_db()
     
     yield
 

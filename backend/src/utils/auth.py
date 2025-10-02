@@ -14,7 +14,7 @@ from src.db.model.user import UserBase, User, UserRead
 from src.schemas.auth import TokenData
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

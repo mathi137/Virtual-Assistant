@@ -11,13 +11,39 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
+    model_config = ConfigDict(extra='ignore')
+    
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
     disabled: bool = Field(default=False)
 
 
+class UserCreate(SQLModel):
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "password": "securePassword123!"
+            }
+        }
+    )
+    
+    email: str
+    password: str
+
+
 class UserRead(SQLModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(
+        extra='ignore',
+        json_schema_extra={
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "disabled": False
+            }
+        }
+    )
     
     id: int
     email: str
@@ -25,7 +51,16 @@ class UserRead(SQLModel):
 
 
 class UserUpdate(SQLModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra={
+            "example": {
+                "email": "newemail@example.com",
+                "password": "newSecurePassword123!",
+                "disabled": False
+            }
+        }
+    )
     
     email: Optional[str] = None
     password: Optional[str] = None
