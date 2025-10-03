@@ -8,6 +8,7 @@ from src.db.session import init_db, close_db, populate_db
 from src.routers.user import router as user_router
 from src.routers.auth import router as auth_router
 from src.routers.agent import router as agent_router
+from src.routers.chat import router as chat_router
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ app.add_middleware(
     allow_headers=["*"],        # <-- any headers
 )
 
-app.include_router(auth_router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
-app.include_router(user_router, prefix=f"{settings.API_PREFIX}/user", tags=["users"])
-app.include_router(agent_router, prefix=f"{settings.API_PREFIX}/agent", tags=["agent"])
+app.include_router(auth_router, prefix=f"{settings.API_PREFIX}/auth", tags=["Auth"])
+app.include_router(user_router, prefix=f"{settings.API_PREFIX}/user", tags=["User"])
+app.include_router(agent_router, prefix=f"{settings.API_PREFIX}/agent", tags=["Agent"])
+app.include_router(chat_router, prefix=f"{settings.API_PREFIX}/chat", tags=["Chat"])

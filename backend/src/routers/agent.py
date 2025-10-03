@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.session import get_session_dep
-from src.db.model.message import MessageCreate
 from src.db.model.agent import Agent, AgentRead, AgentCreate, AgentUpdate
+from src.db.model.message import MessageCreate
 from src.db.model.chat import ChatCreate
 from src.db.crud import AgentCRUD as Database
 from src.controllers.chat import process_message
@@ -53,5 +53,5 @@ async def chat_with_agent(
     response = await process_message(session, chat, message)
     
     return {
-        "agent_response": response
+        "response": response
     }
