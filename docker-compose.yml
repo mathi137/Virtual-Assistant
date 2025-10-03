@@ -15,7 +15,22 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      - system_network
 
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    command: gunicorn core.wsgi:application -b 0.0.0.0:3000
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
     networks:
       - system_network
 
@@ -40,13 +55,6 @@ services:
       start_period: 10s
     networks:
       - system_network
-
-  # frontend:
-  #   build: ./frontend
-  #   container_name: frontend
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
 
 networks:
   system_network:

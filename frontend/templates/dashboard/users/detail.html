@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.email }} - Detalhes do Usuário{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-user me-2"></i>
+    Detalhes do Usuário
+  </h1>
+  <div>
+    <a href="{% url 'dashboard:user_edit' user.id %}" class="btn btn-warning">
+      <i class="fas fa-edit me-1"></i>
+      Editar
+    </a>
+    <a href="{% url 'dashboard:user_list' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-1"></i>
+      Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          Informações Pessoais
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-muted">ID do Usuário</label>
+              <div class="fw-bold">
+                <span class="badge bg-primary fs-6">{{ user.id }}</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted">Email</label>
+              <div class="fw-bold">
+                <i class="fas fa-envelope me-2 text-primary"></i>
+                {{ user.email }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted">Status</label>
+              <div>
+                {% if not user.disabled %}
+                <span class="badge bg-success fs-6">
+                  <i class="fas fa-check-circle me-1"></i>Ativo
+                </span>
+                {% else %}
+                <span class="badge bg-danger fs-6">
+                  <i class="fas fa-times-circle me-1"></i>Inativo
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            {% if user.created_at %}
+            <div class="mb-3">
+              <label class="form-label text-muted">Data de Criação</label>
+              <div class="fw-bold">
+                <i class="fas fa-calendar me-2 text-info"></i>
+                {{ user.created_at|date:"d/m/Y H:i" }}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if user.updated_at %}
+            <div class="mb-3">
+              <label class="form-label text-muted">Última Atualização</label>
+              <div class="fw-bold">
+                <i class="fas fa-clock me-2 text-warning"></i>
+                {{ user.updated_at|date:"d/m/Y H:i" }}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <!-- Ações -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-tools me-2"></i>
+          Ações Rápidas
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'dashboard:user_edit' user.id %}" class="btn btn-outline-warning">
+            <i class="fas fa-edit me-2"></i>
+            Editar Usuário
+          </a>
+
+          {% if not user.disabled %}
+          <button class="btn btn-outline-secondary" disabled>
+            <i class="fas fa-user-slash me-2"></i>
+            Desativar Usuário
+            <small class="d-block">Em breve</small>
+          </button>
+          {% else %}
+          <button class="btn btn-outline-success" disabled>
+            <i class="fas fa-user-check me-2"></i>
+            Ativar Usuário
+            <small class="d-block">Em breve</small>
+          </button>
+          {% endif %}
+
+          <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="fas fa-trash me-2"></i>
+            Deletar Usuário
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+          {{ user.email|first|upper }}
+        </div>
+        <h6 class="mb-1">{{ user.email }}</h6>
+        <small class="text-muted">
+          {% if not user.disabled %}
+          Usuário ativo no sistema
+          {% else %}
+          Usuário inativo no sistema
+          {% endif %}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+          Confirmar Exclusão
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir o usuário <strong>{{ user.email }}</strong>?</p>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Atenção:</strong> Esta ação não pode ser desfeita e todos os dados associados ao usuário serão perdidos.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>
+          Cancelar
+        </button>
+        <form method="post" action="{% url 'dashboard:user_delete' user.id %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-1"></i>
+            Confirmar Exclusão
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

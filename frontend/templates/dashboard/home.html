@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Principal - PIE IV{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-tachometer-alt me-2"></i>
+    Dashboard Principal
+  </h1>
+  <div class="text-muted">
+    <i class="fas fa-calendar me-1"></i>
+    Última atualização: agora
+  </div>
+</div>
+
+<!-- Estatísticas -->
+<div class="row mb-4">
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card stats-card">
+      <div class="card-body text-center">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.total_users|default:0 }}</h2>
+            <p class="mb-0">Total de Usuários</p>
+          </div>
+          <i class="fas fa-users stats-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card stats-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+      <div class="card-body text-center">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.active_users|default:0 }}</h2>
+            <p class="mb-0">Usuários Ativos</p>
+          </div>
+          <i class="fas fa-user-check stats-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card stats-card" style="background: linear-gradient(135deg, #FC466B 0%, #3F5EFB 100%);">
+      <div class="card-body text-center">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">0</h2>
+            <p class="mb-0">Agentes</p>
+          </div>
+          <i class="fas fa-robot stats-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="card stats-card" style="background: linear-gradient(135deg, #FDBB2D 0%, #22C1C3 100%);">
+      <div class="card-body text-center">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">0</h2>
+            <p class="mb-0">Sessões Ativas</p>
+          </div>
+          <i class="fas fa-chart-line stats-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Usuários Recentes -->
+  <div class="col-lg-8 mb-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-users me-2"></i>
+          Usuários Recentes
+        </h5>
+        <a href="{% url 'dashboard:user_list' %}" class="btn btn-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>
+          Gerenciar
+        </a>
+      </div>
+      <div class="card-body">
+        {% if recent_users %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in recent_users %}
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  {% if not user.disabled %}
+                  <span class="badge bg-success">Ativo</span>
+                  {% else %}
+                  <span class="badge bg-danger">Inativo</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'dashboard:user_detail' user.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-users fa-3x text-muted mb-3"></i>
+          <p class="text-muted">Nenhum usuário encontrado</p>
+          <a href="{% url 'dashboard:user_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Criar Primeiro Usuário
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Ações Rápidas -->
+  <div class="col-lg-4 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-bolt me-2"></i>
+          Ações Rápidas
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'dashboard:user_create' %}" class="btn btn-outline-primary">
+            <i class="fas fa-user-plus me-2"></i>
+            Novo Usuário
+          </a>
+          <a href="{% url 'dashboard:user_list' %}" class="btn btn-outline-info">
+            <i class="fas fa-list me-2"></i>
+            Listar Usuários
+          </a>
+          <a href="#" class="btn btn-outline-success disabled">
+            <i class="fas fa-robot me-2"></i>
+            Configurar Agente
+            <small class="d-block text-muted">Em breve</small>
+          </a>
+          <a href="#" class="btn btn-outline-warning disabled">
+            <i class="fas fa-chart-bar me-2"></i>
+            Relatórios
+            <small class="d-block text-muted">Em breve</small>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sistema Info -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          Informações do Sistema
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <div class="border-end">
+              <small class="text-muted d-block">Backend</small>
+              <span class="badge bg-success">Online</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <small class="text-muted d-block">Versão</small>
+            <span class="badge bg-info">1.0.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

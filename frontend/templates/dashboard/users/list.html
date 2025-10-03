@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuários - PIE IV Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-users me-2"></i>
+    Gerenciar Usuários
+  </h1>
+  <a href="{% url 'dashboard:user_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-1"></i>
+    Novo Usuário
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if users %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>
+              <span class="badge bg-secondary">{{ user.id }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                  {{ user.email|first|upper }}
+                </div>
+                {{ user.email }}
+              </div>
+            </td>
+            <td>
+              {% if not user.disabled %}
+              <span class="badge bg-success">
+                <i class="fas fa-check-circle me-1"></i>Ativo
+              </span>
+              {% else %}
+              <span class="badge bg-danger">
+                <i class="fas fa-times-circle me-1"></i>Inativo
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if user.created_at %}
+              <small class="text-muted">{{ user.created_at|date:"d/m/Y H:i" }}</small>
+              {% else %}
+              <small class="text-muted">-</small>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group" role="group">
+                <a href="{% url 'dashboard:user_detail' user.id %}" class="btn btn-sm btn-outline-primary" title="Visualizar">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a href="{% url 'dashboard:user_edit' user.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger" title="Deletar" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+
+              <!-- Modal de Confirmação de Exclusão -->
+              <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Confirmar Exclusão</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Tem certeza que deseja excluir o usuário <strong>{{ user.email }}</strong>?</p>
+                      <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Esta ação não pode ser desfeita.
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                      </button>
+                      <form method="post" action="{% url 'dashboard:user_delete' user.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                          <i class="fas fa-trash me-1"></i>
+                          Excluir
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-users fa-4x text-muted mb-3"></i>
+      <h4 class="text-muted">Nenhum usuário encontrado</h4>
+      <p class="text-muted mb-4">Comece criando o primeiro usuário do sistema.</p>
+      <a href="{% url 'dashboard:user_create' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>
+        Criar Primeiro Usuário
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
