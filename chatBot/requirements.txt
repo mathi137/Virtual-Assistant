@@ -1,2 +1,6 @@
 fastapi[standard]
 uvicorn
+
+pydantic
+# Cliente HTTP para enviar a resposta ao Telegram
+httpx
