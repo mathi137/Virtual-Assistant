@@ -67,7 +67,8 @@ services:
       - ./chatBot/src:/app/src
     command: uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
     depends_on:
-      - backend
+      backend:
+        condition: service_started # <-- ALTERADO DE 'service_healthy'
     networks:
       - system_network
 
