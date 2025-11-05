@@ -1,7 +1,6 @@
 FROM mysql:9.4
 
-# Expose MySQL default port
 EXPOSE 3306
 
-# MySQL will start automatically with the default entrypoint
-# Database initialization is handled by the backend application
+RUN echo "[mysqld]" >> /etc/mysql/conf.d/disable-timezone.cnf && \
+    echo "default-time-zone='+00:00'" >> /etc/mysql/conf.d/disable-timezone.cnf
