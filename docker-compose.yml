@@ -15,6 +15,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/docs"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - system_network
 
@@ -71,13 +77,6 @@ services:
         condition: service_healthy
     networks:
       - system_network
-
-  # frontend:
-  #   build: ./frontend
-  #   container_name: frontend
-  #   restart: always
-  #   ports:
-  #     - "3000:3000"
 
 networks:
   system_network:
