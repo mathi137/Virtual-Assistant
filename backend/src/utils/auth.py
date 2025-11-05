@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 
 from src.config import settings
 from src.db.session import get_session_dep
-from src.db.crud import Database
+from src.db.crud import UserCRUD as Database
 from src.db.model.user import User
 from src.schemas.auth import TokenData
 

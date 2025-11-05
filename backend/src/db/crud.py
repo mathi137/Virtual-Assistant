@@ -168,7 +168,18 @@ class AgentCRUD(Database):
         
         agent_instance = Agent(**agent_data)
         created_agent = await Database.create(session, agent_instance)
-        return await AgentCRUD.get(session, created_agent.id)
+        agent_read = await AgentCRUD.get(session, created_agent.id)
+        
+        # Trigger webhook for agent creation
+        if agent_read:
+            from src.utils.webhook import trigger_agent_webhook
+            agent_dict = agent_read.model_dump()
+            # Convert datetime to string for JSON serialization
+            if 'created_at' in agent_dict and agent_dict['created_at']:
+                agent_dict['created_at'] = agent_dict['created_at'].isoformat()
+            await trigger_agent_webhook('created', agent_dict)
+        
+        return agent_read
 
 
     @staticmethod
@@ -186,4 +197,27 @@ class AgentCRUD(Database):
             return agents
         except Exception as e:
             logger.error(f"Error getting agents for user {user_id}: {e}")
+            return []
+    
+    @staticmethod
+    async def get_all_active_agents(session: AsyncSession) -> list[AgentRead]:
+        """Get all active agents (not disabled, not deleted)."""
+        try:
+            statement = select(Agent).where(Agent.disabled == False)
+            result = await session.exec(statement)
+            agents = result.all()
+            
+            # Convert to AgentRead format
+            agent_reads = []
+            for agent_db in agents:
+                agent_data = agent_db.model_dump()
+                # Convert raw JSON tokens to Token objects if they exist
+                if agent_data.get('tokens'):
+                    agent_data['tokens'] = [Token(**token) for token in agent_data['tokens']]
+                agent_read = AgentRead(**agent_data)
+                agent_reads.append(agent_read)
+            
+            return agent_reads
+        except Exception as e:
+            logger.error(f"Error getting all active agents: {e}")
             return []

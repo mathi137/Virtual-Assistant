@@ -18,6 +18,12 @@ async def create_agent(agent: AgentCreate, session: Annotated[AsyncSession, Depe
     return await Database.create(session, agent)
 
 
+@router.get("/", response_model=list[AgentRead], status_code=status.HTTP_200_OK)
+async def get_all_active_agents(session: Annotated[AsyncSession, Depends(get_session_dep)]):
+    """Get all active agents (not disabled, not deleted)."""
+    return await Database.get_all_active_agents(session)
+
+
 @router.get("/{agent_id}", response_model=AgentRead, status_code=status.HTTP_200_OK)
 async def get_agent(agent_id: int, session: Annotated[AsyncSession, Depends(get_session_dep)]):
     item = await Database.get(session, agent_id)
@@ -33,7 +39,23 @@ async def update_agent(agent_id: int, agent_update: AgentUpdate, session: Annota
 
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_agent(agent_id: int, session: Annotated[AsyncSession, Depends(get_session_dep)]):
-    return await Database.delete(session, agent_id, Agent, AgentUpdate)
+    # Get agent data before deletion for webhook
+    agent_read = await Database.get(session, agent_id)
+    if not agent_read:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    
+    # Perform deletion (soft delete)
+    await Database.delete(session, agent_id, Agent, AgentUpdate)
+    
+    # Trigger webhook for agent deletion
+    from src.utils.webhook import trigger_agent_webhook
+    agent_dict = agent_read.model_dump()
+    # Convert datetime to string for JSON serialization
+    if 'created_at' in agent_dict and agent_dict['created_at']:
+        agent_dict['created_at'] = agent_dict['created_at'].isoformat()
+    await trigger_agent_webhook('deleted', agent_dict)
+    
+    return None
 
 
 @router.get("/user/{user_id}", response_model=list[Agent], status_code=status.HTTP_200_OK)
