@@ -68,7 +68,7 @@ services:
     command: uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
     depends_on:
       backend:
-        condition: service_started # <-- ALTERADO DE 'service_healthy'
+        condition: service_healthy
     networks:
       - system_network
 
