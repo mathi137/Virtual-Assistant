@@ -6,6 +6,7 @@ from typing import Type
 
 from src.config import get_logger
 from src.db.model.user import User, UserUpdate
+from src.db.model.client import Client, ClientUpdate
 
 logger = get_logger(__name__)
 
