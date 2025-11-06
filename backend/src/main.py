@@ -8,6 +8,7 @@ from src.db.session import init_db, close_db
 from src.router.user import router as user_router
 from src.router.auth import router as auth_router
 from src.router.agent import router as agent_router
+from src.router.client import router as client_router
 
 
 @asynccontextmanager
@@ -37,4 +38,5 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
 app.include_router(user_router, prefix=f"{settings.API_PREFIX}/user", tags=["users"])
+app.include_router(client_router, prefix=f"{settings.API_PREFIX}/client", tags=["clients"])
 app.include_router(agent_router, prefix=f"{settings.API_PREFIX}/agent", tags=["agent"])
