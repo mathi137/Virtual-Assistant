@@ -20,7 +20,6 @@ class Client(ClientBase, table=True):
     email: str = Field(index=True, unique=True)
     password: str
     user_id: int = Field(foreign_key="user.id")
-    agent_id: Optional[int] = Field(default=None)
     disabled: bool = Field(default=False)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -53,7 +52,6 @@ class ClientRead(SQLModel):
                 "name": "João Silva",
                 "email": "joao@example.com",
                 "user_id": 1,
-                "agent_id": 1,
                 "disabled": False,
                 "created_at": "2025-11-05T10:30:00Z"
             }
@@ -64,7 +62,6 @@ class ClientRead(SQLModel):
     name: str
     email: str
     user_id: int
-    agent_id: Optional[int]
     disabled: bool
     created_at: datetime
 

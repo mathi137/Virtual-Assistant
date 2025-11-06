@@ -117,7 +117,6 @@ async def client_login(
         "client": {
             "id": client.id,
             "name": client.name,
-            "email": client.email,
-            "agent_id": client.agent_id
+            "email": client.email
         }
     }
