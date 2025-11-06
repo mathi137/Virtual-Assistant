@@ -14,12 +14,13 @@ class ClientBase(SQLModel):
 
 class Client(ClientBase, table=True):
     model_config = ConfigDict(extra='ignore')
-    
+
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=255)
     email: str = Field(index=True, unique=True)
     password: str
     user_id: int = Field(foreign_key="user.id")
+    agent_id: Optional[int] = Field(default=None, foreign_key="agent.id")
     disabled: bool = Field(default=False)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
