@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ client.name }} - Detalhes do Cliente{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-user-tie me-2"></i>
+    Detalhes do Cliente
+  </h1>
+  <div>
+    {% if client.agent_id %}
+    <a
+      href="{% url 'dashboard:client_chat' client.id %}"
+      class="btn btn-success"
+    >
+      <i class="fas fa-comments me-1"></i>
+      Testar Bot
+    </a>
+    {% endif %}
+    <a
+      href="{% url 'dashboard:client_edit' client.id %}"
+      class="btn btn-warning"
+    >
+      <i class="fas fa-edit me-1"></i>
+      Editar
+    </a>
+    <a href="{% url 'dashboard:client_list' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-1"></i>
+      Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          Informações do Cliente
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-muted">ID do Cliente</label>
+              <div class="fw-bold">
+                <span class="badge bg-primary fs-6">{{ client.id }}</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted">Nome</label>
+              <div class="fw-bold">
+                <i class="fas fa-user me-2 text-primary"></i>
+                {{ client.name }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted">Email</label>
+              <div class="fw-bold">
+                <i class="fas fa-envelope me-2 text-info"></i>
+                {{ client.email }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-muted">Status</label>
+              <div>
+                {% if not client.disabled %}
+                <span class="badge bg-success fs-6">
+                  <i class="fas fa-check-circle me-1"></i>Ativo
+                </span>
+                {% else %}
+                <span class="badge bg-danger fs-6">
+                  <i class="fas fa-times-circle me-1"></i>Inativo
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if client.created_at %}
+            <div class="mb-3">
+              <label class="form-label text-muted">Data de Criação</label>
+              <div class="fw-bold">
+                <i class="fas fa-calendar me-2 text-success"></i>
+                {{ client.created_at|date:"d/m/Y H:i" }}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bot Information -->
+    {% if bot_info %}
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-robot me-2"></i>
+          Bot com IA Vinculado
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>Bot ativo!</strong> Este cliente possui um bot com IA
+          configurado.
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">ID do Bot</label>
+          <div class="fw-bold">
+            <span class="badge bg-success fs-6">{{ bot_info.id }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Prompt do Sistema</label>
+          <div class="bg-light p-3 rounded">
+            <small>{{ bot_info.system_prompt }}</small>
+          </div>
+        </div>
+
+        {% if bot_info.tokens %}
+        <div class="mb-3">
+          <label class="form-label text-muted">Plataformas Configuradas</label>
+          {% for token in bot_info.tokens %}
+          <div class="mb-2">
+            <span class="badge bg-info me-2">
+              <i class="fas fa-comments me-1"></i>{{ token.platform_name|title
+              }}
+            </span>
+            <small class="text-muted"
+              >Token: {{ token.token|slice:":15" }}...</small
+            >
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Status do Bot</label>
+          <div>
+            {% if not bot_info.disabled %}
+            <span class="badge bg-success fs-6">
+              <i class="fas fa-play-circle me-1"></i>Rodando
+            </span>
+            {% else %}
+            <span class="badge bg-danger fs-6">
+              <i class="fas fa-pause-circle me-1"></i>Pausado
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="card-body text-center py-4">
+        <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">Nenhum bot configurado</h5>
+        <p class="text-muted">Este cliente ainda não possui um bot com IA.</p>
+        <a
+          href="{% url 'dashboard:client_edit' client.id %}"
+          class="btn btn-primary"
+        >
+          <i class="fas fa-plus me-2"></i>
+          Configurar Bot
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <!-- Ações -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-tools me-2"></i>
+          Ações Rápidas
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a
+            href="{% url 'dashboard:client_edit' client.id %}"
+            class="btn btn-outline-warning"
+          >
+            <i class="fas fa-edit me-2"></i>
+            Editar Cliente
+          </a>
+
+          <button
+            type="button"
+            class="btn btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#deleteModal"
+          >
+            <i class="fas fa-trash me-2"></i>
+            Deletar Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="card">
+      <div class="card-body text-center">
+        <div
+          class="avatar bg-info rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+          style="width: 80px; height: 80px; font-size: 2rem"
+        >
+          {{ client.name|first|upper }}
+        </div>
+        <h6 class="mb-1">{{ client.name }}</h6>
+        <small class="text-muted">{{ client.email }}</small>
+        <hr />
+        <small class="text-muted">
+          {% if not client.disabled %}
+          <i class="fas fa-check-circle text-success me-1"></i>
+          Cliente ativo no sistema {% else %}
+          <i class="fas fa-times-circle text-danger me-1"></i>
+          Cliente inativo no sistema {% endif %}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+          Confirmar Exclusão
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Tem certeza que deseja excluir o cliente
+          <strong>{{ client.name }}</strong>?
+        </p>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Atenção:</strong> Esta ação não pode ser desfeita e o bot
+          vinculado também será desabilitado.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>
+          Cancelar
+        </button>
+        <form
+          method="post"
+          action="{% url 'dashboard:client_delete' client.id %}"
+          class="d-inline"
+        >
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-1"></i>
+            Confirmar Exclusão
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

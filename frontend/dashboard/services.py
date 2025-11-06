@@ -132,3 +132,86 @@ class APIService:
         """
         result = self._make_request('DELETE', '/user/me/')
         return result is not None
+    
+    # ========== CLIENT METHODS ==========
+    
+    def get_clients(self) -> Optional[List[Dict]]:
+        """
+        Busca todos os clientes.
+        """
+        return self._make_request('GET', '/client/')
+    
+    def get_my_clients(self) -> Optional[List[Dict]]:
+        """
+        Busca todos os clientes criados pelo admin atual.
+        """
+        return self._make_request('GET', '/client/my-clients')
+    
+    def get_client(self, client_id: int) -> Optional[Dict]:
+        """
+        Busca um cliente específico por ID.
+        """
+        return self._make_request('GET', f'/client/{client_id}')
+    
+    def create_client(self, name: str, email: str, password: str, system_prompt: Optional[str] = None) -> Optional[Dict]:
+        """
+        Cria um novo cliente e opcionalmente um bot para ele.
+        """
+        data = {
+            'name': name,
+            'email': email,
+            'password': password
+        }
+        if system_prompt:
+            data['system_prompt'] = system_prompt
+        return self._make_request('POST', '/client/', data=data)
+    
+    def update_client(self, client_id: int, data: Dict) -> Optional[Dict]:
+        """
+        Atualiza dados de um cliente.
+        """
+        return self._make_request('PUT', f'/client/{client_id}', data=data)
+    
+    def delete_client(self, client_id: int) -> bool:
+        """
+        Deleta um cliente.
+        """
+        result = self._make_request('DELETE', f'/client/{client_id}')
+        return result is not None
+    
+    # ========== AGENT METHODS ==========
+    
+    def get_agents(self) -> Optional[List[Dict]]:
+        """
+        Busca todos os agents/bots.
+        """
+        return self._make_request('GET', '/agent/')
+    
+    def get_agent(self, agent_id: int) -> Optional[Dict]:
+        """
+        Busca um agent específico por ID.
+        """
+        return self._make_request('GET', f'/agent/{agent_id}')
+    
+    def update_agent(self, agent_id: int, data: Dict) -> Optional[Dict]:
+        """
+        Atualiza dados de um agent/bot.
+        """
+        return self._make_request('PUT', f'/agent/{agent_id}', data=data)
+    
+    def chat_with_agent(self, agent_id: int, chat_id: int, message: str, user_id: int = 1) -> Optional[Dict]:
+        """
+        Envia mensagem para o bot e recebe resposta.
+        """
+        payload = {
+            "chat": {
+                "id": chat_id,
+                "agent_id": agent_id,
+                "platform_id": 1,  # Web Chat
+                "user_id": user_id
+            },
+            "message": {
+                "text": message
+            }
+        }
+        return self._make_request('POST', '/agent/chat/', data=payload)

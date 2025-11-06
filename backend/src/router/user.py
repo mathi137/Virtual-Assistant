@@ -27,6 +27,12 @@ async def create_user(user_data: UserBase, session: AsyncSession = Depends(get_s
     return await Database.create(session, user)
 
 
+@router.get("/", response_model=list[UserRead], status_code=status.HTTP_200_OK)
+async def get_all_users(session: AsyncSession = Depends(get_session_dep)):
+    """Get all users"""
+    return await Database.get_all(session)
+
+
 @router.get("/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def get_user(user_id: int, session: AsyncSession = Depends(get_session_dep)):
     return await Database.get(session, user_id, User)

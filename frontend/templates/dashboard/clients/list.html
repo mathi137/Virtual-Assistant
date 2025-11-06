@@ -1,53 +1,79 @@
 {% extends 'base.html' %}
 
-{% block title %}Usuários - PIE IV Dashboard{% endblock %}
+{% block title %}Clientes - PIE IV Dashboard{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="h3 mb-0">
-    <i class="fas fa-users me-2"></i>
-    Gerenciar Usuários
+    <i class="fas fa-user-tie me-2"></i>
+    Gerenciar Clientes
   </h1>
-  <a href="{% url 'dashboard:user_create' %}" class="btn btn-primary">
+  <a href="{% url 'dashboard:client_create' %}" class="btn btn-primary">
     <i class="fas fa-plus me-1"></i>
-    Novo Usuário
+    Novo Cliente
   </a>
 </div>
 
 <div class="card">
   <div class="card-body">
-    {% if users %}
+    {% if clients %}
     <div class="table-responsive">
       <table class="table table-hover">
         <thead class="table-light">
           <tr>
             <th>ID</th>
+            <th>Nome</th>
             <th>Email</th>
+            <th>Bot</th>
+            <th>Status</th>
             <th>Criado em</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
-          {% for user in users %}
+          {% for client in clients %}
           <tr>
             <td>
-              <span class="badge bg-secondary">{{ user.id }}</span>
+              <span class="badge bg-secondary">{{ client.id }}</span>
             </td>
             <td>
               <div class="d-flex align-items-center">
                 <div
-                  class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                  class="avatar bg-info rounded-circle d-flex align-items-center justify-content-center me-2"
                   style="width: 32px; height: 32px; font-size: 0.8rem"
                 >
-                  {{ user.email|first|upper }}
+                  {{ client.name|first|upper }}
                 </div>
-                {{ user.email }}
+                {{ client.name }}
               </div>
             </td>
+            <td>{{ client.email }}</td>
             <td>
-              {% if user.created_at %}
+              {% if client.agent_id %}
+              <span class="badge bg-success">
+                <i class="fas fa-robot me-1"></i>Bot #{{ client.agent_id }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">
+                <i class="fas fa-times me-1"></i>Sem bot
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not client.disabled %}
+              <span class="badge bg-success">
+                <i class="fas fa-check-circle me-1"></i>Ativo
+              </span>
+              {% else %}
+              <span class="badge bg-danger">
+                <i class="fas fa-times-circle me-1"></i>Inativo
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if client.created_at %}
               <small class="text-muted"
-                >{{ user.created_at|date:"d/m/Y H:i" }}</small
+                >{{ client.created_at|date:"d/m/Y H:i" }}</small
               >
               {% else %}
               <small class="text-muted">-</small>
@@ -56,14 +82,14 @@
             <td>
               <div class="btn-group" role="group">
                 <a
-                  href="{% url 'dashboard:user_detail' user.id %}"
+                  href="{% url 'dashboard:client_detail' client.id %}"
                   class="btn btn-sm btn-outline-primary"
                   title="Visualizar"
                 >
                   <i class="fas fa-eye"></i>
                 </a>
                 <a
-                  href="{% url 'dashboard:user_edit' user.id %}"
+                  href="{% url 'dashboard:client_edit' client.id %}"
                   class="btn btn-sm btn-outline-warning"
                   title="Editar"
                 >
@@ -74,7 +100,7 @@
                   class="btn btn-sm btn-outline-danger"
                   title="Deletar"
                   data-bs-toggle="modal"
-                  data-bs-target="#deleteModal{{ user.id }}"
+                  data-bs-target="#deleteModal{{ client.id }}"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
@@ -83,7 +109,7 @@
               <!-- Modal de Confirmação de Exclusão -->
               <div
                 class="modal fade"
-                id="deleteModal{{ user.id }}"
+                id="deleteModal{{ client.id }}"
                 tabindex="-1"
               >
                 <div class="modal-dialog">
@@ -98,12 +124,13 @@
                     </div>
                     <div class="modal-body">
                       <p>
-                        Tem certeza que deseja excluir o usuário
-                        <strong>{{ user.email }}</strong>?
+                        Tem certeza que deseja excluir o cliente
+                        <strong>{{ client.name }}</strong>?
                       </p>
                       <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Esta ação não pode ser desfeita.
+                        Esta ação não pode ser desfeita e o bot vinculado também
+                        será desabilitado.
                       </div>
                     </div>
                     <div class="modal-footer">
@@ -116,7 +143,7 @@
                       </button>
                       <form
                         method="post"
-                        action="{% url 'dashboard:user_delete' user.id %}"
+                        action="{% url 'dashboard:client_delete' client.id %}"
                         class="d-inline"
                       >
                         {% csrf_token %}
@@ -137,17 +164,17 @@
     </div>
     {% else %}
     <div class="text-center py-5">
-      <i class="fas fa-users fa-4x text-muted mb-3"></i>
-      <h4 class="text-muted">Nenhum usuário encontrado</h4>
+      <i class="fas fa-user-tie fa-4x text-muted mb-3"></i>
+      <h4 class="text-muted">Nenhum cliente encontrado</h4>
       <p class="text-muted mb-4">
-        Comece criando o primeiro usuário do sistema.
+        Comece criando o primeiro cliente do sistema.
       </p>
       <a
-        href="{% url 'dashboard:user_create' %}"
+        href="{% url 'dashboard:client_create' %}"
         class="btn btn-primary btn-lg"
       >
         <i class="fas fa-plus me-2"></i>
-        Criar Primeiro Usuário
+        Criar Primeiro Cliente
       </a>
     </div>
     {% endif %}

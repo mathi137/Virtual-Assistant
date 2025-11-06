@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat com {{ client.name }} - PIE IV Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="fas fa-comments me-2"></i>
+      Chat com {{ client.name }}
+    </h1>
+    <a
+      href="{% url 'dashboard:client_detail' client.id %}"
+      class="btn btn-secondary"
+    >
+      <i class="fas fa-arrow-left me-1"></i>
+      Voltar
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-robot me-2"></i>
+          Bot: {{ client.name }}
+        </div>
+        <div
+          class="card-body"
+          style="height: 500px; overflow-y: auto"
+          id="chat-messages"
+        >
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-comments fa-3x mb-3"></i>
+            <p>Inicie uma conversa com o bot</p>
+          </div>
+        </div>
+        <div class="card-footer">
+          <form id="chat-form" class="d-flex gap-2">
+            {% csrf_token %}
+            <input
+              type="text"
+              id="message-input"
+              class="form-control"
+              placeholder="Digite sua mensagem..."
+              autocomplete="off"
+              required
+            />
+            <button type="submit" class="btn btn-primary" id="send-btn">
+              <i class="fas fa-paper-plane me-1"></i>
+              Enviar
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .message {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    max-width: 80%;
+  }
+
+  .message.user {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .message.bot {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
+  }
+
+  .message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+  }
+</style>
+
+<script>
+  const chatMessages = document.getElementById("chat-messages");
+  const chatForm = document.getElementById("chat-form");
+  const messageInput = document.getElementById("message-input");
+  const sendBtn = document.getElementById("send-btn");
+
+  // Limpar mensagem inicial
+  let isFirstMessage = true;
+
+  chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    // Limpar mensagem inicial na primeira vez
+    if (isFirstMessage) {
+      chatMessages.innerHTML = "";
+      isFirstMessage = false;
+    }
+
+    // Adicionar mensagem do usuário
+    addMessage(message, "user");
+    messageInput.value = "";
+
+    // Desabilitar botão
+    sendBtn.disabled = true;
+    sendBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin me-1"></i>Enviando...';
+
+    try {
+      // Enviar para API
+      const response = await fetch("/api/chat/{{ client.id }}/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")
+            .value,
+        },
+        body: JSON.stringify({ message: message }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.response) {
+        addMessage(data.response, "bot");
+      } else {
+        addMessage(
+          "Erro ao processar mensagem: " + (data.error || "Erro desconhecido"),
+          "bot"
+        );
+      }
+    } catch (error) {
+      addMessage("Erro de conexão: " + error.message, "bot");
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Enviar';
+      messageInput.focus();
+    }
+  });
+
+  function addMessage(text, type) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${type}`;
+
+    const time = new Date().toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    messageDiv.innerHTML = `
+    <div>${text}</div>
+    <div class="message-time">${time}</div>
+  `;
+
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+</script>
+{% endblock %}

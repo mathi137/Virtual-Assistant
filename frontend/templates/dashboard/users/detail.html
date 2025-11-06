@@ -46,21 +46,6 @@
                 {{ user.email }}
               </div>
             </div>
-
-            <div class="mb-3">
-              <label class="form-label text-muted">Status</label>
-              <div>
-                {% if not user.disabled %}
-                <span class="badge bg-success fs-6">
-                  <i class="fas fa-check-circle me-1"></i>Ativo
-                </span>
-                {% else %}
-                <span class="badge bg-danger fs-6">
-                  <i class="fas fa-times-circle me-1"></i>Inativo
-                </span>
-                {% endif %}
-              </div>
-            </div>
           </div>
 
           <div class="col-md-6">
@@ -72,9 +57,7 @@
                 {{ user.created_at|date:"d/m/Y H:i" }}
               </div>
             </div>
-            {% endif %}
-
-            {% if user.updated_at %}
+            {% endif %} {% if user.updated_at %}
             <div class="mb-3">
               <label class="form-label text-muted">Última Atualização</label>
               <div class="fw-bold">
@@ -100,26 +83,20 @@
       </div>
       <div class="card-body">
         <div class="d-grid gap-2">
-          <a href="{% url 'dashboard:user_edit' user.id %}" class="btn btn-outline-warning">
+          <a
+            href="{% url 'dashboard:user_edit' user.id %}"
+            class="btn btn-outline-warning"
+          >
             <i class="fas fa-edit me-2"></i>
             Editar Usuário
           </a>
 
-          {% if not user.disabled %}
-          <button class="btn btn-outline-secondary" disabled>
-            <i class="fas fa-user-slash me-2"></i>
-            Desativar Usuário
-            <small class="d-block">Em breve</small>
-          </button>
-          {% else %}
-          <button class="btn btn-outline-success" disabled>
-            <i class="fas fa-user-check me-2"></i>
-            Ativar Usuário
-            <small class="d-block">Em breve</small>
-          </button>
-          {% endif %}
-
-          <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+          <button
+            type="button"
+            class="btn btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#deleteModal"
+          >
             <i class="fas fa-trash me-2"></i>
             Deletar Usuário
           </button>
@@ -130,17 +107,14 @@
     <!-- Avatar -->
     <div class="card">
       <div class="card-body text-center">
-        <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+        <div
+          class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+          style="width: 80px; height: 80px; font-size: 2rem"
+        >
           {{ user.email|first|upper }}
         </div>
         <h6 class="mb-1">{{ user.email }}</h6>
-        <small class="text-muted">
-          {% if not user.disabled %}
-          Usuário ativo no sistema
-          {% else %}
-          Usuário inativo no sistema
-          {% endif %}
-        </small>
+        <small class="text-muted">Administrador do sistema</small>
       </div>
     </div>
   </div>
@@ -155,13 +129,21 @@
           <i class="fas fa-exclamation-triangle text-warning me-2"></i>
           Confirmar Exclusão
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <div class="modal-body">
-        <p>Tem certeza que deseja excluir o usuário <strong>{{ user.email }}</strong>?</p>
+        <p>
+          Tem certeza que deseja excluir o usuário
+          <strong>{{ user.email }}</strong>?
+        </p>
         <div class="alert alert-danger">
           <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>Atenção:</strong> Esta ação não pode ser desfeita e todos os dados associados ao usuário serão perdidos.
+          <strong>Atenção:</strong> Esta ação não pode ser desfeita e todos os
+          dados associados ao usuário serão perdidos.
         </div>
       </div>
       <div class="modal-footer">
@@ -169,7 +151,11 @@
           <i class="fas fa-times me-1"></i>
           Cancelar
         </button>
-        <form method="post" action="{% url 'dashboard:user_delete' user.id %}" class="d-inline">
+        <form
+          method="post"
+          action="{% url 'dashboard:user_delete' user.id %}"
+          class="d-inline"
+        >
           {% csrf_token %}
           <button type="submit" class="btn btn-danger">
             <i class="fas fa-trash me-1"></i>
