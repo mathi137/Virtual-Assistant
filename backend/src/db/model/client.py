@@ -20,7 +20,7 @@ class Client(ClientBase, table=True):
     email: str = Field(index=True, unique=True)
     password: str
     user_id: int = Field(foreign_key="user.id")
-    agent_id: Optional[int] = Field(default=None, foreign_key="agent.id")
+    agent_id: Optional[int] = Field(default=None)
     disabled: bool = Field(default=False)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
