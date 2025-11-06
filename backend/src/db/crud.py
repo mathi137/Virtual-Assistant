@@ -108,3 +108,22 @@ class UserCRUD(Database):
             update_dict['password'] = get_password_hash(update_dict['password'])
         
         return await Database.update(session, user.id, UserUpdate(**update_dict), User)
+
+class ClientCRUD(Database):
+    @staticmethod
+    async def get_clients_by_user_id(session: AsyncSession, user_id: int) -> list[Client]:
+        """Get all clients created by a specific user."""
+        result = await session.exec(select(Client).where(Client.user_id == user_id, Client.disabled == False))
+        return result.all()
+    
+    @staticmethod
+    async def create(session: AsyncSession, client_data, user_id: int) -> Client:
+        """Create a new client with hashed password."""
+        from src.utils.auth import get_password_hash
+        
+        client_dict = client_data.model_dump(exclude={'system_prompt'})
+        client_dict['password'] = get_password_hash(client_dict['password'])
+        client_dict['user_id'] = user_id
+        
+        client = Client(**client_dict)
+        return await Database.create(session, client, Client)
