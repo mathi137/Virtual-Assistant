@@ -112,6 +112,12 @@ class UserCRUD(Database):
 
 class ClientCRUD(Database):
     @staticmethod
+    async def get_all(session: AsyncSession) -> list[Client]:
+        """Get all non-disabled clients."""
+        result = await session.exec(select(Client).where(Client.disabled == False))
+        return result.all()
+    
+    @staticmethod
     async def get_clients_by_user_id(session: AsyncSession, user_id: int) -> list[Client]:
         """Get all clients created by a specific user."""
         result = await session.exec(select(Client).where(Client.user_id == user_id, Client.disabled == False))
@@ -127,4 +133,4 @@ class ClientCRUD(Database):
         client_dict['user_id'] = user_id
         
         client = Client(**client_dict)
-        return await Database.create(session, client, Client)
+        return await Database.create(session, client)
