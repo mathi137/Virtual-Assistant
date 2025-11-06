@@ -19,7 +19,7 @@ class Client(ClientBase, table=True):
     name: str = Field(max_length=255)
     email: str = Field(index=True, unique=True)
     password: str
-    user_id: int = Field(foreign_key="user.id")  # ADM que criou o cliente
+    user_id: int = Field(foreign_key="user.id")
     disabled: bool = Field(default=False)
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
