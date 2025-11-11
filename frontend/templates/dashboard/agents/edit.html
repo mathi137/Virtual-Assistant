@@ -46,11 +46,44 @@
 
           <div class="mb-3">
             <label for="system_prompt" class="form-label">
-              <i class="fas fa-comment-dots me-2"></i>System Prompt
+              <i class="fas fa-comment-dots me-2"></i>System Prompt *
             </label>
-            <textarea class="form-control" id="system_prompt" name="system_prompt" rows="4" placeholder="You are a helpful AI assistant...">{{ request.POST.system_prompt|default:agent.system_prompt|default:'' }}</textarea>
+            <textarea class="form-control" id="system_prompt" name="system_prompt" rows="4" required placeholder="You are a helpful AI assistant...">{{ request.POST.system_prompt|default:agent.system_prompt|default:'' }}</textarea>
             <div class="form-text">
-              Instruções do sistema para o agente (opcional).
+              Instruções do sistema para o agente (obrigatório).
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="platform_name" class="form-label">
+              <i class="fas fa-broadcast-tower me-2"></i>Plataforma *
+            </label>
+            <select class="form-control" id="platform_name" name="platform_name" required>
+              <option value="">Selecione uma plataforma</option>
+              {% if agent.tokens %}
+                {% for token in agent.tokens %}
+                  {% if forloop.first %}
+                    <option value="telegram" {% if request.POST.platform_name == 'telegram' or token.platform_name == 'telegram' %}selected{% endif %}>Telegram</option>
+                    <option value="whatsapp" disabled {% if token.platform_name == 'whatsapp' %}selected{% endif %}>WhatsApp (Indisponível)</option>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <option value="telegram" {% if request.POST.platform_name == 'telegram' %}selected{% endif %}>Telegram</option>
+                <option value="whatsapp" disabled>WhatsApp (Indisponível)</option>
+              {% endif %}
+            </select>
+            <div class="form-text">
+              Plataforma onde o agente será usado (obrigatório).
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="token" class="form-label">
+              <i class="fas fa-key me-2"></i>Token *
+            </label>
+            <input type="text" class="form-control" id="token" name="token" required placeholder="Token da plataforma" value="{% if request.POST.token %}{{ request.POST.token }}{% elif agent.tokens %}{% for token in agent.tokens %}{% if forloop.first %}{{ token.token }}{% endif %}{% endfor %}{% endif %}">
+            <div class="form-text">
+              Token de autenticação da plataforma (obrigatório).
             </div>
           </div>
 

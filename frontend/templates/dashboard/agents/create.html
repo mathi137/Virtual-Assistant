@@ -54,6 +54,30 @@
             </div>
           </div>
 
+          <div class="mb-3">
+            <label for="platform_name" class="form-label">
+              <i class="fas fa-broadcast-tower me-2"></i>Plataforma *
+            </label>
+            <select class="form-control" id="platform_name" name="platform_name" required>
+              <option value="">Selecione uma plataforma</option>
+              <option value="telegram" {% if request.POST.platform_name == 'telegram' %}selected{% endif %}>Telegram</option>
+              <option value="whatsapp" disabled>WhatsApp (Indisponível)</option>
+            </select>
+            <div class="form-text">
+              Plataforma onde o agente será usado (obrigatório).
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="token" class="form-label">
+              <i class="fas fa-key me-2"></i>Token *
+            </label>
+            <input type="text" class="form-control" id="token" name="token" required placeholder="Token da plataforma" value="{{ request.POST.token|default:'' }}">
+            <div class="form-text">
+              Token de autenticação da plataforma (obrigatório).
+            </div>
+          </div>
+
           <div class="d-grid gap-2">
             <button type="submit" class="btn btn-primary btn-lg">
               <i class="fas fa-save me-2"></i>

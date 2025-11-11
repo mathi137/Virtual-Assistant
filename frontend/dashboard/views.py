@@ -317,6 +317,8 @@ class AgentCreateView(View):
         name = request.POST.get('name')
         image = request.POST.get('image', '')
         system_prompt = request.POST.get('system_prompt', '')
+        platform_name = request.POST.get('platform_name', '')
+        token = request.POST.get('token', '')
         
         if not name:
             messages.error(request, 'Nome é obrigatório')
@@ -324,6 +326,25 @@ class AgentCreateView(View):
         
         if not system_prompt:
             messages.error(request, 'System prompt é obrigatório')
+            return render(request, 'dashboard/agents/create.html')
+        
+        if not platform_name:
+            messages.error(request, 'Plataforma é obrigatória')
+            return render(request, 'dashboard/agents/create.html')
+        
+        if not token:
+            messages.error(request, 'Token é obrigatório')
+            return render(request, 'dashboard/agents/create.html')
+        
+        # Map platform name to platform_id (1=telegram, 2=whatsapp)
+        platform_id_map = {
+            'telegram': 1,
+            'whatsapp': 2
+        }
+        platform_id = platform_id_map.get(platform_name.lower())
+        
+        if not platform_id:
+            messages.error(request, 'Plataforma inválida')
             return render(request, 'dashboard/agents/create.html')
         
         try:
@@ -339,7 +360,12 @@ class AgentCreateView(View):
                 'user_id': current_user.get('id'),
                 'name': name,
                 'image': image if image else None,
-                'system_prompt': system_prompt
+                'system_prompt': system_prompt,
+                'tokens': [{
+                    'platform_id': platform_id,
+                    'platform_name': platform_name.lower(),
+                    'token': token
+                }]
             }
             
             agent = api_service.create_agent(data)
@@ -392,21 +418,50 @@ class AgentEditView(View):
         name = request.POST.get('name')
         image = request.POST.get('image', '')
         system_prompt = request.POST.get('system_prompt', '')
+        platform_name = request.POST.get('platform_name', '')
+        token = request.POST.get('token', '')
         
-        data = {}
-        if name:
-            data['name'] = name
-        if image is not None:
-            data['image'] = image if image else None
-        if system_prompt is not None:
-            data['system_prompt'] = system_prompt
+        if not name:
+            messages.error(request, 'Nome é obrigatório')
+            return redirect('dashboard:agent_edit', agent_id=agent_id)
         
-        if not data:
-            messages.error(request, 'Pelo menos um campo deve ser preenchido')
+        if not system_prompt:
+            messages.error(request, 'System prompt é obrigatório')
+            return redirect('dashboard:agent_edit', agent_id=agent_id)
+        
+        if not platform_name:
+            messages.error(request, 'Plataforma é obrigatória')
+            return redirect('dashboard:agent_edit', agent_id=agent_id)
+        
+        if not token:
+            messages.error(request, 'Token é obrigatório')
+            return redirect('dashboard:agent_edit', agent_id=agent_id)
+        
+        # Map platform name to platform_id (1=telegram, 2=whatsapp)
+        platform_id_map = {
+            'telegram': 1,
+            'whatsapp': 2
+        }
+        platform_id = platform_id_map.get(platform_name.lower())
+        
+        if not platform_id:
+            messages.error(request, 'Plataforma inválida')
             return redirect('dashboard:agent_edit', agent_id=agent_id)
         
         try:
             api_service = APIService(request.session.get('access_token'))
+            
+            data = {
+                'name': name,
+                'image': image if image else None,
+                'system_prompt': system_prompt,
+                'tokens': [{
+                    'platform_id': platform_id,
+                    'platform_name': platform_name.lower(),
+                    'token': token
+                }]
+            }
+            
             agent = api_service.update_agent(agent_id, data)
             
             if agent:
@@ -415,6 +470,13 @@ class AgentEditView(View):
             else:
                 messages.error(request, 'Erro ao atualizar agente')
                 
+        except requests.exceptions.HTTPError as e:
+            # Handle 401 authentication errors
+            if '401' in str(e):
+                messages.error(request, 'Sessão expirada. Por favor, faça login novamente.')
+                request.session.flush()
+                return redirect('dashboard:login')
+            messages.error(request, f'Erro ao atualizar agente: {str(e)}')
         except Exception as e:
             messages.error(request, f'Erro ao atualizar agente: {str(e)}')
         
