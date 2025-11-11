@@ -46,24 +46,30 @@ class APIService:
                     return response.json()
                 except json.JSONDecodeError:
                     return True
+            elif response.status_code == 401:
+                # Authentication error - raise exception so it can be caught
+                error_msg = f"401 - Authentication failed: {response.text}"
+                print(f"Erro na API: {error_msg}")
+                raise requests.exceptions.HTTPError(error_msg, response=response)
             else:
                 print(f"Erro na API: {response.status_code} - {response.text}")
                 return None
                 
         except requests.exceptions.RequestException as e:
             print(f"Erro de conexão: {str(e)}")
-            return None
+            raise
     
     def login(self, email: str, password: str) -> Optional[str]:
         """
         Realiza login e retorna o token de acesso.
+        Endpoint: POST /api/v1/auth/token
+        Payload: form-data com username (email) e password
         """
         data = {
-            'username': email,  # A API FastAPI usa 'username' para o email
+            'username': email,
             'password': password
         }
         
-        # Para login, usar form data ao invés de JSON
         try:
             url = f"{self.base_url}/auth/token"
             response = requests.post(url, data=data)
@@ -117,18 +123,57 @@ class APIService:
     def get_current_user(self) -> Optional[Dict]:
         """
         Busca dados do usuário autenticado.
+        Endpoint: GET /api/v1/user/me
         """
-        return self._make_request('GET', '/user/me/')
+        return self._make_request('GET', '/user/me')
     
     def update_current_user(self, data: Dict) -> Optional[Dict]:
         """
         Atualiza dados do usuário autenticado.
+        Endpoint: PUT /api/v1/user/me
         """
-        return self._make_request('PUT', '/user/me/', data=data)
+        return self._make_request('PUT', '/user/me', data=data)
     
     def delete_current_user(self) -> bool:
         """
         Deleta conta do usuário autenticado.
+        Endpoint: DELETE /api/v1/user/me
         """
-        result = self._make_request('DELETE', '/user/me/')
+        result = self._make_request('DELETE', '/user/me')
+        return result is not None
+    
+    def get_agents_by_user(self, user_id: int) -> Optional[List[Dict]]:
+        """
+        Busca todos os agentes de um usuário.
+        Endpoint: GET /api/v1/agent/user/{user_id}
+        """
+        return self._make_request('GET', f'/agent/user/{user_id}')
+    
+    def get_agent(self, agent_id: int) -> Optional[Dict]:
+        """
+        Busca um agente específico por ID.
+        Endpoint: GET /api/v1/agent/{agent_id}
+        """
+        return self._make_request('GET', f'/agent/{agent_id}')
+    
+    def create_agent(self, data: Dict) -> Optional[Dict]:
+        """
+        Cria um novo agente.
+        Endpoint: POST /api/v1/agent/
+        """
+        return self._make_request('POST', '/agent/', data=data)
+    
+    def update_agent(self, agent_id: int, data: Dict) -> Optional[Dict]:
+        """
+        Atualiza dados de um agente.
+        Endpoint: PUT /api/v1/agent/{agent_id}
+        """
+        return self._make_request('PUT', f'/agent/{agent_id}', data=data)
+    
+    def delete_agent(self, agent_id: int) -> bool:
+        """
+        Deleta um agente.
+        Endpoint: DELETE /api/v1/agent/{agent_id}
+        """
+        result = self._make_request('DELETE', f'/agent/{agent_id}')
         return result is not None

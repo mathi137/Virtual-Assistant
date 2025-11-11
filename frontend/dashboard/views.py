@@ -3,6 +3,7 @@ from django.views import View
 from django.contrib import messages
 from django.http import JsonResponse
 import json
+import requests
 
 from .services import APIService
 
@@ -68,6 +69,38 @@ class LoginView(View):
             messages.error(request, f'Erro ao fazer login: {str(e)}')
         
         return render(request, 'dashboard/login.html')
+
+
+class SignupView(View):
+    """View de cadastro"""
+    
+    def get(self, request):
+        if request.session.get('access_token'):
+            return redirect('dashboard:home')
+        return render(request, 'dashboard/signup.html')
+    
+    def post(self, request):
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        if not email or not password:
+            messages.error(request, 'Email e senha são obrigatórios')
+            return render(request, 'dashboard/signup.html')
+        
+        try:
+            api_service = APIService()
+            user = api_service.create_user(email, password)
+            
+            if user:
+                messages.success(request, 'Conta criada com sucesso! Faça login para continuar.')
+                return redirect('dashboard:login')
+            else:
+                messages.error(request, 'Erro ao criar conta')
+                
+        except Exception as e:
+            messages.error(request, f'Erro ao criar conta: {str(e)}')
+        
+        return render(request, 'dashboard/signup.html')
 
 
 class LogoutView(View):
@@ -231,3 +264,180 @@ class UserDeleteView(View):
             messages.error(request, f'Erro ao deletar usuário: {str(e)}')
         
         return redirect('dashboard:user_list')
+
+
+class AgentListView(View):
+    """Lista de agentes do usuário"""
+    
+    def get(self, request):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        
+        try:
+            api_service = APIService(request.session.get('access_token'))
+            current_user = api_service.get_current_user()
+            
+            if not current_user:
+                messages.error(request, 'Sessão expirada. Por favor, faça login novamente.')
+                request.session.flush()
+                return redirect('dashboard:login')
+            
+            user_id = current_user.get('id')
+            if not user_id:
+                messages.error(request, 'Erro ao obter ID do usuário')
+                request.session.flush()
+                return redirect('dashboard:login')
+            
+            agents = api_service.get_agents_by_user(user_id)
+            
+            context = {'agents': agents or []}
+            return render(request, 'dashboard/agents/list.html', context)
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao carregar agentes: {str(e)}')
+            # If it's an authentication error, clear session and redirect to login
+            if '401' in str(e) or 'credentials' in str(e).lower():
+                request.session.flush()
+                return redirect('dashboard:login')
+            return render(request, 'dashboard/agents/list.html', {'agents': []})
+
+
+class AgentCreateView(View):
+    """Criar agente"""
+    
+    def get(self, request):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        return render(request, 'dashboard/agents/create.html')
+    
+    def post(self, request):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        
+        name = request.POST.get('name')
+        image = request.POST.get('image', '')
+        system_prompt = request.POST.get('system_prompt', '')
+        
+        if not name:
+            messages.error(request, 'Nome é obrigatório')
+            return render(request, 'dashboard/agents/create.html')
+        
+        if not system_prompt:
+            messages.error(request, 'System prompt é obrigatório')
+            return render(request, 'dashboard/agents/create.html')
+        
+        try:
+            api_service = APIService(request.session.get('access_token'))
+            current_user = api_service.get_current_user()
+            
+            if not current_user:
+                messages.error(request, 'Erro ao obter informações do usuário')
+                request.session.flush()
+                return redirect('dashboard:login')
+            
+            data = {
+                'user_id': current_user.get('id'),
+                'name': name,
+                'image': image if image else None,
+                'system_prompt': system_prompt
+            }
+            
+            agent = api_service.create_agent(data)
+            
+            if agent:
+                messages.success(request, 'Agente criado com sucesso!')
+                return redirect('dashboard:home')
+            else:
+                messages.error(request, 'Erro ao criar agente. Verifique os dados e tente novamente.')
+                
+        except requests.exceptions.HTTPError as e:
+            # Handle 401 authentication errors
+            if '401' in str(e):
+                messages.error(request, 'Sessão expirada. Por favor, faça login novamente.')
+                request.session.flush()
+                return redirect('dashboard:login')
+            messages.error(request, f'Erro ao criar agente: {str(e)}')
+        except Exception as e:
+            messages.error(request, f'Erro ao criar agente: {str(e)}')
+        
+        return render(request, 'dashboard/agents/create.html')
+
+
+class AgentEditView(View):
+    """Editar agente"""
+    
+    def get(self, request, agent_id):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        
+        try:
+            api_service = APIService(request.session.get('access_token'))
+            agent = api_service.get_agent(agent_id)
+            
+            if agent:
+                context = {'agent': agent}
+                return render(request, 'dashboard/agents/edit.html', context)
+            else:
+                messages.error(request, 'Agente não encontrado')
+                return redirect('dashboard:home')
+                
+        except Exception as e:
+            messages.error(request, f'Erro ao carregar agente: {str(e)}')
+            return redirect('dashboard:home')
+    
+    def post(self, request, agent_id):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        
+        name = request.POST.get('name')
+        image = request.POST.get('image', '')
+        system_prompt = request.POST.get('system_prompt', '')
+        
+        data = {}
+        if name:
+            data['name'] = name
+        if image is not None:
+            data['image'] = image if image else None
+        if system_prompt is not None:
+            data['system_prompt'] = system_prompt
+        
+        if not data:
+            messages.error(request, 'Pelo menos um campo deve ser preenchido')
+            return redirect('dashboard:agent_edit', agent_id=agent_id)
+        
+        try:
+            api_service = APIService(request.session.get('access_token'))
+            agent = api_service.update_agent(agent_id, data)
+            
+            if agent:
+                messages.success(request, 'Agente atualizado com sucesso!')
+                return redirect('dashboard:home')
+            else:
+                messages.error(request, 'Erro ao atualizar agente')
+                
+        except Exception as e:
+            messages.error(request, f'Erro ao atualizar agente: {str(e)}')
+        
+        return redirect('dashboard:agent_edit', agent_id=agent_id)
+
+
+class AgentDeleteView(View):
+    """Deletar agente"""
+    
+    def post(self, request, agent_id):
+        if not request.session.get('access_token'):
+            return redirect('dashboard:login')
+        
+        try:
+            api_service = APIService(request.session.get('access_token'))
+            success = api_service.delete_agent(agent_id)
+            
+            if success:
+                messages.success(request, 'Agente deletado com sucesso!')
+            else:
+                messages.error(request, 'Erro ao deletar agente')
+                
+        except Exception as e:
+            messages.error(request, f'Erro ao deletar agente: {str(e)}')
+        
+        return redirect('dashboard:home')

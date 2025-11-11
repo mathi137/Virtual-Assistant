@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Agente - PIE IV Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-robot me-2"></i>
+    Editar Agente
+  </h1>
+  <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-1"></i>
+    Voltar
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          Informações do Agente
+        </h5>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'dashboard:agent_edit' agent.id %}">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="name" class="form-label">
+              <i class="fas fa-tag me-2"></i>Nome *
+            </label>
+            <input type="text" class="form-control" id="name" name="name" required placeholder="Nome do agente" value="{{ request.POST.name|default:agent.name }}">
+          </div>
+
+          <div class="mb-3">
+            <label for="image" class="form-label">
+              <i class="fas fa-image me-2"></i>URL da Imagem
+            </label>
+            <input type="url" class="form-control" id="image" name="image" placeholder="https://example.com/image.png" value="{{ request.POST.image|default:agent.image|default:'' }}">
+            <div class="form-text">
+              URL da imagem do agente (opcional).
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="system_prompt" class="form-label">
+              <i class="fas fa-comment-dots me-2"></i>System Prompt
+            </label>
+            <textarea class="form-control" id="system_prompt" name="system_prompt" rows="4" placeholder="You are a helpful AI assistant...">{{ request.POST.system_prompt|default:agent.system_prompt|default:'' }}</textarea>
+            <div class="form-text">
+              Instruções do sistema para o agente (opcional).
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-save me-2"></i>
+              Salvar Alterações
+            </button>
+            <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times me-1"></i>
+              Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

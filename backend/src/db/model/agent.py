@@ -10,6 +10,8 @@ class AgentBase(SQLModel):
     model_config = ConfigDict(extra='forbid')
     
     user_id: int
+    name: str
+    image: Optional[str] = None
     system_prompt: str
     disabled: bool
 
@@ -27,6 +29,8 @@ class Agent(AgentBase, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    name: str = Field(max_length=255)
+    image: Optional[str] = Field(default=None, max_length=500)
     system_prompt: str = Field(default=None, max_length=4096)
     disabled: bool = Field(default=False)
     tokens: Optional[Any] = Field(default=None, sa_column=Column(JSON))
@@ -39,6 +43,8 @@ class AgentCreate(SQLModel):
         json_schema_extra={
             "example": {
                 "user_id": 1,
+                "name": "My Assistant",
+                "image": "https://example.com/image.png",
                 "system_prompt": "You are a helpful AI assistant. Be concise and accurate in your responses.",
                 "tokens": [
                     {
@@ -52,6 +58,8 @@ class AgentCreate(SQLModel):
     )
     
     user_id: int
+    name: str
+    image: Optional[str] = None
     system_prompt: str
     tokens: Optional[list[Token]] = Field(default=None)
 
@@ -63,6 +71,8 @@ class AgentRead(SQLModel):
             "example": {
                 "id": 1,
                 "user_id": 1,
+                "name": "My Assistant",
+                "image": "https://example.com/image.png",
                 "system_prompt": "You are a helpful AI assistant. Be concise and accurate in your responses.",
                 "disabled": False,
                 "tokens": [
@@ -79,6 +89,8 @@ class AgentRead(SQLModel):
 
     id: int
     user_id: int
+    name: str
+    image: Optional[str] = None
     system_prompt: str
     disabled: bool
     tokens: Optional[list[Token]] = Field(default=None)
@@ -88,6 +100,8 @@ class AgentRead(SQLModel):
 class AgentUpdate(SQLModel):
     model_config = ConfigDict(extra='forbid')
     
+    name: Optional[str] = None
+    image: Optional[str] = None
     system_prompt: Optional[str] = None
     disabled: Optional[bool] = None
     tokens: Optional[list[Token]] = Field(default=None)

@@ -98,21 +98,9 @@
       <div class="col-md-2 px-0">
         <div class="sidebar p-3">
           <nav class="nav flex-column">
-            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
-              <i class="fas fa-home me-2"></i>
-              Dashboard
-            </a>
-            <a class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:user_list' %}">
-              <i class="fas fa-users me-2"></i>
-              Usuários
-            </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' or 'agent' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:home' %}">
               <i class="fas fa-robot me-2"></i>
               Agentes
-            </a>
-            <a class="nav-link" href="#">
-              <i class="fas fa-chart-bar me-2"></i>
-              Relatórios
             </a>
           </nav>
         </div>

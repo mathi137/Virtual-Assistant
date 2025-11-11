@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Agentes - PIE IV Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">
+    <i class="fas fa-robot me-2"></i>
+    Meus Agentes
+  </h1>
+  <a href="{% url 'dashboard:agent_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-1"></i>
+    Novo Agente
+  </a>
+</div>
+
+{% if agents %}
+<div class="row">
+  {% for agent in agents %}
+  <div class="col-md-4 col-lg-3 mb-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="text-center mb-3">
+          {% if agent.image %}
+          <img src="{{ agent.image }}" alt="{{ agent.name }}" class="img-fluid rounded" style="max-height: 150px; width: 100%; object-fit: cover;">
+          {% else %}
+          <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+            <i class="fas fa-robot fa-4x text-white"></i>
+          </div>
+          {% endif %}
+        </div>
+        <h5 class="card-title text-center mb-3">{{ agent.name }}</h5>
+        <div class="mt-auto">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm w-100 dropdown-toggle" type="button" id="optionsDropdown{{ agent.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-ellipsis-v me-1"></i>
+              Opções
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="optionsDropdown{{ agent.id }}">
+              <li>
+                <a class="dropdown-item" href="{% url 'dashboard:agent_edit' agent.id %}">
+                  <i class="fas fa-edit me-2"></i>
+                  Editar
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal{{ agent.id }}">
+                  <i class="fas fa-trash me-2"></i>
+                  Deletar
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div class="modal fade" id="deleteModal{{ agent.id }}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirmar Exclusão</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Tem certeza que deseja excluir o agente <strong>{{ agent.name }}</strong>?</p>
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Esta ação não pode ser desfeita.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <form method="post" action="{% url 'dashboard:agent_delete' agent.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i>
+                Excluir
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-5">
+    <i class="fas fa-robot fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">Nenhum agente encontrado</h4>
+    <p class="text-muted mb-4">Comece criando seu primeiro agente.</p>
+    <a href="{% url 'dashboard:agent_create' %}" class="btn btn-primary btn-lg">
+      <i class="fas fa-plus me-2"></i>
+      Criar Primeiro Agente
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

@@ -19,6 +19,12 @@ async def create_user(user_data: UserBase, session: AsyncSession = Depends(get_s
     return await Database.create(session, user)
 
 
+@router.get("/me", response_model=UserRead, status_code=status.HTTP_200_OK)
+async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """Get current authenticated user information"""
+    return current_user
+
+
 @router.get("/{user_id}", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def get_user(user_id: int, session: AsyncSession = Depends(get_session_dep)):
     item = await Database.get(session, user_id, User)
@@ -45,18 +51,13 @@ async def reactivate_user(user_id: int, session: AsyncSession = Depends(get_sess
     return None
 
 
-@router.get("/me/", response_model=UserRead, status_code=status.HTTP_200_OK)
-async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
-    return current_user
-
-
-@router.put("/me/", response_model=UserRead, status_code=status.HTTP_200_OK)
+@router.put("/me", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def update_me(current_user: Annotated[User, Depends(get_current_active_user)], user_update: UserUpdate, session: AsyncSession = Depends(get_session_dep)):
     # Password hashing is now handled automatically in the CRUD layer
     return await Database.update_user(session, current_user, user_update)
 
 
-@router.delete("/me/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_me(current_user: Annotated[User, Depends(get_current_active_user)], session: AsyncSession = Depends(get_session_dep)):
     await Database.delete(session, current_user.id, User, UserUpdate)
     return None
