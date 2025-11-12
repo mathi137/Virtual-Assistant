@@ -11,14 +11,18 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy entrypoint script and make it executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Copy project
 COPY . .
 
 # Create static directories
 RUN mkdir -p static staticfiles media
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || true
-
 # Expose port
 EXPOSE 3000
+
+# Set entrypoint
+ENTRYPOINT ["/entrypoint.sh"]

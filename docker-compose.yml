@@ -37,6 +37,12 @@ services:
       - backend
     networks:
       - system_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/login/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   mysql:
     build: ./db

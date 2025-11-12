@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import json
 import requests
 
@@ -503,3 +503,13 @@ class AgentDeleteView(View):
             messages.error(request, f'Erro ao deletar agente: {str(e)}')
         
         return redirect('dashboard:home')
+
+
+class WebSocketView(View):
+    """Handle WebSocket upgrade requests - returns 400 as WebSocket is not supported"""
+    
+    def get(self, request):
+        return HttpResponse('WebSocket is not supported', status=400)
+    
+    def post(self, request):
+        return HttpResponse('WebSocket is not supported', status=400)
