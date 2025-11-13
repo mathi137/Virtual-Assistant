@@ -190,8 +190,12 @@ class AgentCRUD(Database):
 
     @staticmethod
     async def get_agents_by_user_id(session: AsyncSession, user_id: str) -> list[Agent]:
+        """Get all enabled agents for a specific user."""
         try:
-            statement = select(Agent).where(Agent.user_id == user_id)
+            statement = select(Agent).where(
+                Agent.user_id == user_id,
+                Agent.disabled == False
+            )
             result = await session.exec(statement)
             agents = result.all()
             return agents

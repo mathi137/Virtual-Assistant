@@ -65,7 +65,26 @@ async def telegram_webhook(agent_id: int, update: Update):
             ia_resposta = ia_response_data.get("response", "A IA não respondeu claramente, mas o status foi 200 OK.")
         except httpx.HTTPStatusError as e:
             print(f"ERRO API BACKEND {e.response.status_code}: {e.response.text}")
-            ia_resposta = f"Erro no serviço de IA: Status {e.response.status_code}."
+            
+            # If agent doesn't exist (404) or is invalid (400/500), remove from registry
+            agent_removed = False
+            if e.response.status_code in [400, 404, 500]:
+                error_text = e.response.text.lower()
+                if "does not exist" in error_text or "not found" in error_text:
+                    print(f"Agent {agent_id} não existe mais no backend, removendo do registro")
+                    from .utils import handle_agent_deleted
+                    await handle_agent_deleted(agent_id)
+                    agent_removed = True
+                    ia_resposta = "Este agente não está mais disponível."
+                else:
+                    ia_resposta = f"Erro no serviço de IA: Status {e.response.status_code}."
+            else:
+                ia_resposta = f"Erro no serviço de IA: Status {e.response.status_code}."
+            
+            # Send error message to user (using token we had before potential removal)
+            if agent_info:
+                await send_telegram_message(agent_info["token"], chat_id, ia_resposta)
+            return {"status": "error" if agent_removed else "success", "response_sent": ia_resposta}
         except httpx.RequestError:
             print("ERRO CONEXÃO BACKEND")
             ia_resposta = "Erro de conexão com o serviço de IA."
@@ -82,21 +101,45 @@ async def agent_event_webhook(payload: AgentWebhookPayload):
         agent = payload.agent
         
         print(f"Agent event received: {event_type} - Agent ID: {agent.id}")
+        print(f"Agent data: id={agent.id}, user_id={agent.user_id}, disabled={agent.disabled}")
+        print(f"Agent tokens: {agent.tokens}")
         
         if event_type == "created":
+            # Convert tokens to dict format for handle_agent_created
+            tokens_list = []
+            if agent.tokens:
+                for token in agent.tokens:
+                    if hasattr(token, 'model_dump'):
+                        # Pydantic model
+                        tokens_list.append(token.model_dump())
+                    elif isinstance(token, dict):
+                        # Already a dict
+                        tokens_list.append(token)
+                    else:
+                        # Fallback: try to extract attributes
+                        tokens_list.append({
+                            "platform_id": getattr(token, "platform_id", None),
+                            "platform_name": getattr(token, "platform_name", ""),
+                            "token": getattr(token, "token", "")
+                        })
+            
             agent_dict = {
                 "id": agent.id,
                 "user_id": agent.user_id,
                 "disabled": agent.disabled,
-                "tokens": [token.model_dump() if hasattr(token, 'model_dump') else token for token in agent.tokens] if agent.tokens else []
+                "tokens": tokens_list
             }
+            print(f"Processing agent creation: {agent_dict}")
             await handle_agent_created(agent_dict)
         elif event_type == "deleted":
+            print(f"Processing agent deletion: {agent.id}")
             await handle_agent_deleted(agent.id)
         
         return {"status": "success", "event": event_type, "agent_id": agent.id}
     except Exception as e:
         print(f"Error processing agent event: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing agent event: {str(e)}")
 
 

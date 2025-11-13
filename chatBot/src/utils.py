@@ -80,19 +80,49 @@ async def load_agent_from_backend(agent_data: dict):
     disabled = agent_data.get("disabled", False)
     tokens = agent_data.get("tokens", [])
     
+    print(f"Loading agent {agent_id} with {len(tokens)} token(s)")
+    print(f"Agent data: {agent_data}")
+    
+    if not tokens:
+        print(f"Warning: Agent {agent_id} has no tokens, skipping registration")
+        return
+    
+    telegram_token_found = False
     for token_data in tokens:
-        if isinstance(token_data, dict) and token_data.get("platform_name", "").lower() == "telegram":
-            token = token_data.get("token")
-            platform_id = token_data.get("platform_id")
+        print(f"Processing token: {token_data}")
+        
+        # Handle different token formats
+        if isinstance(token_data, dict):
+            platform_name = token_data.get("platform_name", "")
+            if isinstance(platform_name, str):
+                platform_name = platform_name.lower()
             
-            agent_registry[agent_id] = {
-                "token": token,
-                "user_id": user_id,
-                "platform_id": platform_id,
-                "disabled": disabled
-            }
-            print(f"Telegram token armazenado para agent {agent_id}, Platform ID: {platform_id}")
-            await register_telegram_webhook(token, agent_id)
+            print(f"Token platform_name: '{platform_name}'")
+            
+            if platform_name == "telegram":
+                token = token_data.get("token")
+                platform_id = token_data.get("platform_id")
+                
+                if not token:
+                    print(f"Warning: Agent {agent_id} has telegram token entry but token is empty")
+                    continue
+                
+                agent_registry[agent_id] = {
+                    "token": token,
+                    "user_id": user_id,
+                    "platform_id": platform_id,
+                    "disabled": disabled
+                }
+                print(f"Telegram token armazenado para agent {agent_id}, Platform ID: {platform_id}")
+                telegram_token_found = True
+                await register_telegram_webhook(token, agent_id)
+            else:
+                print(f"Skipping token with platform_name '{platform_name}' (not telegram)")
+        else:
+            print(f"Warning: Token data is not a dict: {type(token_data)}")
+    
+    if not telegram_token_found:
+        print(f"Warning: No telegram token found for agent {agent_id}")
 
 
 async def load_all_active_agents():
@@ -120,21 +150,41 @@ async def load_all_active_agents():
 
 
 async def handle_agent_created(agent_data: dict):
-    """Handle agent creation event."""
+    """Handle agent creation event - add agent to registry."""
     agent_id = agent_data.get("id")
     print(f"Agent created: {agent_id}")
-    await load_agent_from_backend(agent_data)
+    
+    try:
+        await load_agent_from_backend(agent_data)
+        print(f"Successfully registered agent {agent_id} in chatBot")
+    except Exception as e:
+        print(f"Error registering agent {agent_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 async def handle_agent_deleted(agent_id: int):
-    """Handle agent deletion event."""
+    """Handle agent deletion event - remove agent from registry."""
     print(f"Agent deleted: {agent_id}")
     
+    # Get agent info before removal to unregister webhook
     agent_info = get_agent(agent_id)
+    
+    # Unregister Telegram webhook if agent exists
     if agent_info:
         token = agent_info.get("token")
         if token:
-            await unregister_telegram_webhook(token)
+            print(f"Unregistering Telegram webhook for agent {agent_id}")
+            try:
+                await unregister_telegram_webhook(token)
+            except Exception as e:
+                print(f"Error unregistering webhook for agent {agent_id}: {e}")
+    
+    # Remove agent from registry
+    if agent_id in agent_registry:
         del agent_registry[agent_id]
         print(f"Agent {agent_id} removido do registro")
+    else:
+        print(f"Warning: Agent {agent_id} not found in registry")
 

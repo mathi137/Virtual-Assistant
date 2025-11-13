@@ -39,21 +39,44 @@ async def update_agent(agent_id: int, agent_update: AgentUpdate, session: Annota
 
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_agent(agent_id: int, session: Annotated[AsyncSession, Depends(get_session_dep)]):
-    # Get agent data before deletion for webhook
-    agent_read = await Database.get(session, agent_id)
-    if not agent_read:
+    # Get agent data directly from database (bypass disabled check) for webhook
+    from src.db.model.agent import Token
+    from src.db.crud import Database as BaseDatabase
+    from src.utils.webhook import trigger_agent_webhook
+    from src.config import get_logger
+    
+    logger = get_logger(__name__)
+    
+    # Use session.get() directly to bypass disabled check
+    agent_db = await session.get(Agent, agent_id)
+    if not agent_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
     
-    # Perform deletion (soft delete)
-    await Database.delete(session, agent_id, Agent, AgentUpdate)
+    # Convert agent data to dict for webhook (before deletion)
+    agent_data = agent_db.model_dump()
     
-    # Trigger webhook for agent deletion
-    from src.utils.webhook import trigger_agent_webhook
+    # Convert raw JSON tokens to Token objects if they exist
+    if agent_data.get('tokens'):
+        agent_data['tokens'] = [Token(**token) for token in agent_data['tokens']]
+    
+    agent_read = AgentRead(**agent_data)
     agent_dict = agent_read.model_dump()
+    
     # Convert datetime to string for JSON serialization
     if 'created_at' in agent_dict and agent_dict['created_at']:
         agent_dict['created_at'] = agent_dict['created_at'].isoformat()
-    await trigger_agent_webhook('deleted', agent_dict)
+    
+    # Perform deletion (soft delete) - use BaseDatabase for the delete method
+    await BaseDatabase.delete(session, agent_id, Agent, AgentUpdate)
+    
+    # Trigger webhook for agent deletion (non-blocking - log errors but don't fail)
+    try:
+        webhook_success = await trigger_agent_webhook('deleted', agent_dict)
+        if not webhook_success:
+            logger.warning(f"Webhook for agent deletion failed, but agent {agent_id} was deleted from database")
+    except Exception as e:
+        logger.error(f"Error triggering webhook for agent deletion: {e}", exc_info=True)
+        # Don't fail the deletion if webhook fails
     
     return None
 

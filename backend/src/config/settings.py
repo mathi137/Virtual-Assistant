@@ -13,6 +13,6 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
     
-    CHATBOT_WEBHOOK_URL: str = "http://chat_bot:8001/agent/event"
+    CHATBOT_WEBHOOK_URL: str = "http://chat_bot:8001/agent/event"  # Must use port 8001, not 80
 
 settings = Settings()
