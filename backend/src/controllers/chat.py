@@ -16,22 +16,44 @@ async def process_message(session: AsyncSession, chat: ChatCreate, message: Mess
     Process a user message and return an agent response.
     """
     try:
-        # Ensure chat exists
-        existing_chat = await Database.get(session, chat.id, Chat)
+        # Look up chat by external_chat_id (Telegram/WhatsApp chat ID)
+        from sqlmodel import select
+        external_chat_id = chat.id  # This is the Telegram/WhatsApp chat ID
+        statement = select(Chat).where(Chat.external_chat_id == external_chat_id)
+        result = await session.exec(statement)
+        existing_chat = result.first()
+        
         if not existing_chat:
             try:
                 # Validate that referenced entities exist before creating chat
+                from src.db.model.user import User
+                from src.db.model.platform import Platform
+                
+                # Check if user exists
+                user_exists = await Database.get(session, chat.user_id, User)
+                if not user_exists:
+                    raise ValueError(f"User with id {chat.user_id} does not exist")
+                
                 # Check if agent exists
                 agent_exists = await Database.get(session, chat.agent_id, Agent)
                 if not agent_exists:
                     raise ValueError(f"Agent with id {chat.agent_id} does not exist")
                 
-                chat_db = Chat(**chat.model_dump())
+                # Check if platform exists
+                platform_exists = await Database.get(session, chat.platform_id, Platform)
+                if not platform_exists:
+                    raise ValueError(f"Platform with id {chat.platform_id} does not exist")
+                
+                # Create chat with external_chat_id, let database auto-generate id
+                chat_data = chat.model_dump()
+                chat_data['external_chat_id'] = chat_data.pop('id')  # Move id to external_chat_id
+                chat_db = Chat(**chat_data)
                 await Database.create(session, chat_db)
-                chat_id = chat.id
+                await session.refresh(chat_db)
+                chat_id = chat_db.id
             except Exception as e:
-                print(f"Error creating chat: {str(e)}")
-                print(f"Chat data: {chat.model_dump()}")
+                logger.error(f"Error creating chat: {str(e)}")
+                logger.error(f"Chat data: {chat.model_dump()}")
                 raise e
         else:
             chat_id = existing_chat.id

@@ -5,17 +5,30 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.session import get_session_dep
 from src.db.model.agent import Agent, AgentRead, AgentCreate, AgentUpdate
+from src.db.model.user import User
 from src.db.model.message import MessageCreate
 from src.db.model.chat import ChatCreate
 from src.db.crud import AgentCRUD as Database
 from src.controllers.chat import process_message
+from src.utils.auth import get_current_active_user
 
 router = APIRouter()
 
 
 @router.post("/", response_model=AgentRead, status_code=status.HTTP_201_CREATED)
-async def create_agent(agent: AgentCreate, session: Annotated[AsyncSession, Depends(get_session_dep)]):
-    return await Database.create(session, agent)
+async def create_agent(
+    agent: AgentCreate, 
+    session: Annotated[AsyncSession, Depends(get_session_dep)],
+    current_user: Annotated[User, Depends(get_current_active_user)]
+):
+    # Use the authenticated user's ID instead of the one from the request body
+    # This ensures users can only create agents for themselves
+    agent_data = agent.model_dump()
+    agent_data['user_id'] = current_user.id
+    
+    # Create a new AgentCreate with the correct user_id
+    agent_with_user = AgentCreate(**agent_data)
+    return await Database.create(session, agent_with_user)
 
 
 @router.get("/", response_model=list[AgentRead], status_code=status.HTTP_200_OK)

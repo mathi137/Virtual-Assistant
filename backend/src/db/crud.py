@@ -20,13 +20,47 @@ class Database:
             await session.refresh(item)
 
         except IntegrityError as e:
-            logger.error(f"Integrity error: {e}")
+            logger.error(f"Integrity error: {e}", exc_info=True)
             await session.rollback()
-            raise HTTPException(status_code=400, detail="Item with given unique field already exists")
+            error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+            
+            # Check for foreign key constraint violations
+            if "foreign key" in error_msg.lower() or "FOREIGN KEY" in str(e):
+                if "user.id" in error_msg or "user_id" in error_msg.lower():
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"User with the provided user_id does not exist. Please ensure the user is registered first."
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Referenced entity does not exist: {error_msg}"
+                    )
+            # Check for unique constraint violations
+            elif "unique" in error_msg.lower() or "UNIQUE" in str(e):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Item with given unique field already exists"
+                )
+            else:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Database constraint violation: {error_msg}"
+                )
         except Exception as e:
-            logger.error(f"Error creating item: {e}")
+            logger.error(f"Error creating item: {e}", exc_info=True)
             await session.rollback()
-            raise HTTPException(status_code=400, detail="Unexpected error when creating item")
+            error_msg = str(e)
+            # Provide more specific error messages based on exception type
+            if "foreign key" in error_msg.lower():
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Referenced entity does not exist: {error_msg}"
+                )
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Error creating item: {error_msg}"
+            )
         return item
 
 
@@ -158,6 +192,9 @@ class AgentCRUD(Database):
 
     @staticmethod
     async def create(session: AsyncSession, item: AgentCreate) -> AgentRead:
+        # Note: User validation is now handled at the router level through authentication
+        # This method assumes the user_id is valid (set by the authenticated endpoint)
+        
         # Convert AgentCreate data to dict and handle tokens
         agent_data = item.model_dump()
         
